@@ -22,9 +22,14 @@ namespace calib{
             static float OFFSET_X;//相机坐标系与雷达坐标系X轴的偏移
             static float OFFSET_Y;//相机坐标系与雷达坐标系Y轴的偏移
             static float OFFSET_Z;//相机坐标系与雷达坐标系Z轴的偏移
-            static float ANGLE_X;//相机坐标系与雷达坐标系Z轴的旋转角度
-            static float ANGLE_Y;//相机坐标系与雷达坐标系X轴的旋转角度
-            static float ANGLE_Z;//相机坐标系与雷达坐标系Y轴的旋转角度
+            static float ANGLE_X;//相机坐标系与雷达坐标系X轴的旋转角度
+            static float ANGLE_Y;//相机坐标系与雷达坐标系Y轴的旋转角度
+            static float ANGLE_Z;//相机坐标系与雷达坐标系Z轴的旋转角度
+
+            //迭代参数
+            static float STEP_OFFSET;//每次增加的平移量
+            static float STEP_ANGLE;//每次增加的旋转角度值
+
     };
 }
 

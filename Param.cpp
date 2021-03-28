@@ -25,4 +25,7 @@ namespace calib{
     float Param::ANGLE_Y = 0;
     float Param::ANGLE_Z = 0;
 
+    float Param::STEP_OFFSET = 0;
+    float Param::STEP_ANGLE = 0;
+
 }

@@ -72,3 +72,23 @@ bool ExtriCal::processPointCloud(PointCloud::Ptr _point_cloud, PointCloud::Ptr _
     return true;
     
 }
+
+/**
+ * @brief 计算外参函数
+ */
+bool ExtriCal::calculateT(cv::Mat& _T, float _tran_x, float _tran_y, float _tran_z, float _yaw, float _pitch, float _roll){
+
+    float r1 = cos(_yaw)*cos(_pitch);
+    float r2 = cos(_yaw)*sin(_pitch)*sin(_roll) - sin(_yaw)*cos(_roll);
+    float r3 = cos(_yaw)*sin(_pitch)*cos(_roll) + sin(_yaw)*sin(_roll);
+    float r4 = sin(_yaw)*cos(_pitch);
+    float r5 = sin(_yaw)*sin(_pitch)*sin(_roll) + cos(_yaw)*cos(_roll);
+    float r6 = sin(_yaw)*sin(_pitch)*cos(_roll) - cos(_yaw)*sin(_roll);
+    float r7 = -sin(_pitch);
+    float r8 = cos(_pitch)*sin(_roll);
+    float r9 = cos(_pitch)*cos(_roll);
+
+    _T = (cv::Mat_<double>(4, 4) << r1, r2, r3, _tran_x, r4, r5, r6, _tran_y, r7, r8, r9, _tran_z, 0, 0, 0, 1);
+
+    return true;
+}

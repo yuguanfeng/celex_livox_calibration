@@ -27,6 +27,9 @@ angle_x: 0
 angle_y: 0
 angle_z: 90
 
+step_offset: 10  #mm
+step_angle: 1    #degree
+
 #CameraSet
 width : 640
 height : 480
