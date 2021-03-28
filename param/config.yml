@@ -1,0 +1,39 @@
+%YAML:1.0
+---
+calibration_time: "2019年4月06日 星期六"
+nframes: 35
+image_width: 640
+image_height: 480
+square_size: 35
+
+#640x480
+camera_matrix: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [452.810033210447, 0, 307.514523830436,
+          0.,433.649632254521, 232.804956809039,
+          0., 0., 1. ]
+distortion_coefficients: !!opencv-matrix
+   rows: 5
+   cols: 1
+   dt: d
+   data: [-0.346029396127828,0.118312006703833,0.000278020655464680,-0.00121469675043767,0.0216094331403231]
+
+offset_x: 235
+offset_y: 95
+offset_z: 0
+angle_x: 0
+angle_y: 0
+angle_z: 90
+
+#CameraSet
+width : 640
+height : 480
+
+#Process
+dataset_number: 5
+gray_threshold: 155
+pointcloud_threshold: 200
+
+

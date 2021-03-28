@@ -150,6 +150,33 @@ ExtriCal.cpp.s:
 	$(MAKE) -f CMakeFiles/test1.dir/build.make CMakeFiles/test1.dir/ExtriCal.cpp.s
 .PHONY : ExtriCal.cpp.s
 
+Param.o: Param.cpp.o
+
+.PHONY : Param.o
+
+# target to build an object file
+Param.cpp.o:
+	$(MAKE) -f CMakeFiles/test1.dir/build.make CMakeFiles/test1.dir/Param.cpp.o
+.PHONY : Param.cpp.o
+
+Param.i: Param.cpp.i
+
+.PHONY : Param.i
+
+# target to preprocess a source file
+Param.cpp.i:
+	$(MAKE) -f CMakeFiles/test1.dir/build.make CMakeFiles/test1.dir/Param.cpp.i
+.PHONY : Param.cpp.i
+
+Param.s: Param.cpp.s
+
+.PHONY : Param.s
+
+# target to generate assembly for a file
+Param.cpp.s:
+	$(MAKE) -f CMakeFiles/test1.dir/build.make CMakeFiles/test1.dir/Param.cpp.s
+.PHONY : Param.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -189,6 +216,9 @@ help:
 	@echo "... ExtriCal.o"
 	@echo "... ExtriCal.i"
 	@echo "... ExtriCal.s"
+	@echo "... Param.o"
+	@echo "... Param.i"
+	@echo "... Param.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
