@@ -40,6 +40,8 @@ void LoadParam(){
 
     fs["step_offset"] >> calib::Param::STEP_OFFSET;
     fs["step_angle"] >> calib::Param::STEP_ANGLE;
+    fs["max_hit_rate"] >> calib::Param::MAX_HIT_RATE;
+    fs["max_iter_number"] >> calib::Param::MAX_ITER_NUMBER;
 
 }
 
@@ -52,8 +54,6 @@ int main(void){
     LoadParam();
     cout << "camera_matrix:" << endl << calib::Param::camera_matrix << endl;
 
-    //P_camera = T_l2c * P_lidar; 相机坐标系为参考坐标系，雷达坐标系为动坐标系
-    cv::Mat T_l2c = cv::Mat::zeros(cv::Size(4,4), CV_64FC1);
     float tran_x = calib::Param::OFFSET_X;
     float tran_y = calib::Param::OFFSET_Y;
     float tran_z = calib::Param::OFFSET_Z;
@@ -77,7 +77,7 @@ int main(void){
     //对点云坐标进行读取（默认是已经用cloudcompare处理后的），得到DATASET_NUMBER个三维点集
     for (int i = 0; i < calib::Param::DATASET_NUMBER; i++){
 
-/*         cout << "～～～～～～～～begin process image～～～～～～～～" << endl;
+        cout << "～～～～～～～～begin process image～～～～～～～～" << endl;
         //读取图像，并处理得到白板所在像素集合
         string img_path = "/home/yuguanfeng/celex_livox_calibration/data/camera/" 
                         + std::to_string(i) + ".bmp";    //注意要绝对路径，相对路径会报错
@@ -93,7 +93,10 @@ int main(void){
             cout << "Process image failed !" << endl;
                 return -1;
         }
-        roi_points_set.push_back(roi_points); */
+        roi_points_set.push_back(roi_points);
+
+        //清空vector数据，否则会累计
+        roi_points.clear();
 
 /*         cout << "～～～～～～～～begin process pointcloud～～～～～～～～" << endl;
         //读取点云，并处理得到白板所在点云集合
@@ -142,20 +145,28 @@ int main(void){
             roi_3d_points.push_back(temp);
         }
         cout << "The number of roi_3d_points in No." << i << " pointcloud is " << roi_3d_points.size() << endl << endl;
-        cout << roi_3d_points[0].x << " " << roi_3d_points[0].y << " " << roi_3d_points[0].z << endl;
-        cout << roi_3d_points[1].x << " " << roi_3d_points[1].y << " " << roi_3d_points[1].z << endl;
+//        cout << roi_3d_points[0].x << " " << roi_3d_points[0].y << " " << roi_3d_points[0].z << endl;
+//        cout << roi_3d_points[1].x << " " << roi_3d_points[1].y << " " << roi_3d_points[1].z << endl;
         roi_3d_points_set.push_back(roi_3d_points);
 
         //每一次都清空vector数据,关闭txt_reader
-        roi_3d_points.clear();  
         txt_reader.close();
+        roi_3d_points.clear();  
+
     }
 
-    
+    int iter_number = 0;
+    float last_hit_rate = 0;
+    int best_iter = 0;
+    float best_hit_rate = 0;
+    cv::Mat best_T_l2c = cv::Mat::zeros(cv::Size(4,4), CV_64FC1);
 
+    while(1){
 
-    //while(1){
+        iter_number++;    //计算迭代次数
 
+        //P_camera = T_l2c * P_lidar; 相机坐标系为参考坐标系，雷达坐标系为动坐标系
+        cv::Mat T_l2c = cv::Mat::zeros(cv::Size(4,4), CV_64FC1);
         //在每一次迭代开始，改变z轴平移量和绕z轴旋转量
         tran_x = tran_x;
         tran_y = tran_y;
@@ -170,17 +181,69 @@ int main(void){
         }else{
             cout << "Calculate T failed !" << endl;
             return -1;
-        }       
+        } 
 
-    
-        //for (int i = 0; i < calib::Param::DATASET_NUMBER; i++){
+        int total_number_hit = 0;
+        int total_number_3d_points = 0;
+        float total_hit_rate = 0; 
 
+        for (int i = 0; i < calib::Param::DATASET_NUMBER; i++){
 
+            int number_hit = 0;
+            int number_3d_points = roi_3d_points_set[i].size();
+            float hit_rate = 0;
+            
+            for(int j = 0; j < number_3d_points; j++){
+                //点云投影
+                cv::Point3f temp_3d_point = roi_3d_points_set[i][j];
+                cv::Point2f temp_pixel_point;
+                ex_cal.project(temp_3d_point, temp_pixel_point, T_l2c);
 
-        //}
+                //判断是否中靶
+                int hit_flag = 0;
+                hit_flag = ex_cal.judgeHit(temp_pixel_point, roi_points_set[i]);
+                if(hit_flag == 1){
+                    cout << "Hit !" << endl;
+                    number_hit++;
+                }
+            }
+            hit_rate = number_hit / number_3d_points;
 
+            cout << "The number of hit in No." << i << " dataset is " << number_hit << endl;
+            cout << "The number of roi_3d_points in No." << i << " dataset is " << number_3d_points << endl;
+            cout << "The hit_rate of No. " << i << " dataset is " << hit_rate << endl;
 
-    //}
+            total_number_hit = total_number_hit + number_hit;
+            total_number_3d_points = total_number_3d_points + number_3d_points;
+        }
+
+        total_hit_rate = total_number_hit / total_number_3d_points;
+        if(total_hit_rate > best_hit_rate){
+            best_iter = iter_number;
+            best_hit_rate = total_hit_rate;
+            for(int k = 0; k < 4; k++){
+                for(int l = 0; l < 4; l++){
+                    best_T_l2c.at<double>(k,l) = T_l2c.at<double>(k,l);
+                }
+            }
+        }
+        last_hit_rate = total_hit_rate;
+
+        if(best_hit_rate > calib::Param::MAX_HIT_RATE){//达到一个差不多的上靶率即可退出
+            cout << "Already got a high hit-rate !" << endl;
+            break;
+        }
+
+        if(iter_number > calib::Param::MAX_ITER_NUMBER){//即使未达到比较好的上靶率，达到一定迭代次数也退出
+            cout << "Already reached a max iter-time!" << endl;
+            break;
+        }
+
+    }
+
+    cout << "Best iter is " << best_iter << endl;
+    cout << "Bset hit-rate is " << best_hit_rate << endl;
+    cout << "Best T_l2c is: " << endl << best_T_l2c << endl;
 
     return 0;
 

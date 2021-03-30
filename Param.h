@@ -29,6 +29,8 @@ namespace calib{
             //迭代参数
             static float STEP_OFFSET;//每次增加的平移量
             static float STEP_ANGLE;//每次增加的旋转角度值
+            static float MAX_HIT_RATE;//上靶率的上限
+            static int MAX_ITER_NUMBER;//迭代次数的上限
 
     };
 }

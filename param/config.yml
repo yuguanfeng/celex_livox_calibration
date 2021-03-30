@@ -29,6 +29,8 @@ angle_z: 90
 
 step_offset: 10  #mm
 step_angle: 1    #degree
+max_hit_rate: 0.98
+max_iter_number: 100
 
 #CameraSet
 width : 640

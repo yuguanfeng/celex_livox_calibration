@@ -27,5 +27,7 @@ namespace calib{
 
     float Param::STEP_OFFSET = 0;
     float Param::STEP_ANGLE = 0;
+    float Param::MAX_HIT_RATE = 0;
+    int Param::MAX_ITER_NUMBER = 0;
 
 }

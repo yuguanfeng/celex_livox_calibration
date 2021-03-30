@@ -140,3 +140,22 @@ bool ExtriCal::project(cv::Point3f _3d_point, cv::Point2f& _pixel_point, cv::Mat
     return true;
 
 }
+
+/**
+ * @brief 判断是否中靶
+ */
+int ExtriCal::judgeHit(cv::Point2f _pixel_point, vector<cv::Point2f> _roi_points){
+
+    for(int i = 0; i < _roi_points.size(); i++){
+        if(fabs(_pixel_point.x - _roi_points[i].x) < 1e-6){
+            if(fabs(_pixel_point.y - _roi_points[i].y) < 1e-6){
+                return 1;
+            }else{
+                continue;
+            }
+        }else{
+            continue;
+        }
+    }
+    return 0;
+}
