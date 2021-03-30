@@ -1,4 +1,5 @@
 #include "ExtriCal.h"
+#include "Param.h"
 
 #define DEBUG_SHOW_IMAGE
 #define DEBUG_SHOW_POINTCLOUD
@@ -91,4 +92,51 @@ bool ExtriCal::calculateT(cv::Mat& _T, float _tran_x, float _tran_y, float _tran
     _T = (cv::Mat_<double>(4, 4) << r1, r2, r3, _tran_x, r4, r5, r6, _tran_y, r7, r8, r9, _tran_z, 0, 0, 0, 1);
 
     return true;
+}
+
+/**
+ * @brief 将点云投影到像素
+ */
+bool ExtriCal::project(cv::Mat _lidar_point, cv::Point2f& _pixel_point，cv::Mat _T){
+    //将3x1的点云，转换为4x1的世界坐标，因为外参是4x4
+    cv::Mat world_point = cv::Mat(4,1,CV_64FC1);
+    world_point.at<double>(0,0) = _lidar_point.at<double>(0,0);
+    world_point.at<double>(1,0) = _lidar_point.at<double>(1,0);
+    world_point.at<double>(2,0) = _lidar_point.at<double>(2,0);
+    world_point.at<double>(3,0) = 1;
+    cout << "--------point in world--------" << endl;
+    cout << world_point << endl;
+
+    //由外参得到4x1的相机坐标系下坐标
+    cv::Mat camera_point = cv::Mat(4,1,CV_64FC1);
+    camera_point = _T * world_point;
+    cout << "--------point in camera--------" << endl;
+    cout << camera_point << endl;
+
+    //由3x3内参矩阵转换为3x4的变换矩阵，因为相机坐标为4x1
+    cv::Mat matrix_3x4_c2p = cv::Mat(3,4,CV_64FC1);
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 3; j++){
+            matrix_3x4_c2p.at<double>(i,j) = calib::Param::camera_matrix.at<double>(i,j);
+        }
+    }
+    for(int i = 0; i < 3; i++){
+        matrix_3x4_c2p.at<double>(i,3) = 0;
+    }
+    cout << "----------matrix_3x4_c2p--------" << endl;
+    cout << matrix_3x4_c2p << endl;
+
+    //由3x4的变换矩阵得到3x1的像素平面内的齐次坐标
+    cv::Mat pixel_point = cv::Mat(3,1,CV_64FC1);
+    pixel_point = matrix_3x4_c2p * camera_point / camera_point.at<double>(2,0);//除Z(深度)是得到归一化平面的坐标
+    cout << "--------point in image(3x1)--------" << endl;
+    cout << pixel_point << endl;
+    
+    //赋值到Point2f的像素坐标
+    _pixel_point = cv::Point2f(pixel_point.at<double>(0,0),pixel_point.at<double>(1,0));
+    cout << "--------point in image--------" << endl;
+    cout << _pixel_point << endl;
+
+    return true;
+
 }

@@ -57,12 +57,80 @@ int main(void){
     float tran_z = calib::Param::OFFSET_Z;
     float yaw = calib::Param::ANGLE_Z / 180 * CV_PI;
     float pitch = calib::Param::ANGLE_Y / 180 * CV_PI;
-    float roll = calib::Param::ANGLE_X / 180 * CV_PI;
-
+    float roll = calib::Param::ANGLE_X / 180 * CV_PI;4
+    
+    ExtriCal ex_cal;
     vector<cv::Point2f> roi_points;
+    vector<vector<cv::Point2f> roi_points_set;
+
     PointCloud::Ptr pointcloud(new PointCloud);
     PointCloud::Ptr roi_pointcloud(new PointCloud);
-    ExtriCal ex_cal;
+    
+
+
+    //在外参迭代计算之前，先对图像进行处理，得到DATASET_NUMBERD个像素集；
+    //对点云坐标进行读取（默认是已经用cloudcompare处理后的），得到DATASET_NUMBER个三维点集
+    for (int i = 0; i < calib::Param::DATASET_NUMBER; i++){
+
+        cout << "～～～～～～～～begin process image～～～～～～～～" << endl;
+        //读取图像，并处理得到白板所在像素集合
+        string img_path = "/home/yuguanfeng/celex_livox_calibration/data/camera/" 
+                        + std::to_string(i) + ".bmp";    //注意要绝对路径，相对路径会报错
+        cv::Mat img = cv::imread(img_path);
+        if(img.empty()){
+            cout << "Image loading failed !" << endl;
+            return -1;
+        }
+        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);   //测试时输入时rgb图像，先进行灰度转化，实际事件相机得到就是灰度图像
+        if(ex_cal.processImage(img, roi_points, calib::Param::GRAY_THRESHOLD)){
+            cout << "The number of roi_points in No." << i << " image is " << roi_points.size() << endl << endl;
+        }else{
+            cout << "Process image failed !" << endl;
+                return -1;
+        }
+        roi_points_set.push_back(roi_points);
+
+        cout << "～～～～～～～～begin process pointcloud～～～～～～～～" << endl;
+        //读取点云，并处理得到白板所在点云集合
+    //  string ply_path = "/home/yuguanfeng/celex_livox_calibration/data/lidar/" 
+    //                    + std::to_string(i) + ".ply";    //注意要绝对路径，相对路径会报错
+        string ply_path = "/home/yuguanfeng/celex_livox_calibration/data/lidar/0.ply" ;
+        if (pcl::io::loadPLYFile<pcl::PointXYZ>(ply_path, *pointcloud) == -1) {       
+            PCL_ERROR("PointCloud loading failed !\n");
+            system("pause");
+            return -1;
+        }
+
+        pcl::PLYReader reader;
+        reader.read(ply_path, *pointcloud);
+        cout << "test6......." << endl;
+        cout << "pointcloud's width:" << pointcloud->width << ", height:" << pointcloud->height << endl; 
+
+        pcl::visualization::CloudViewer viewer("PointCloud Viewer");
+        viewer.showCloud(pointcloud);
+        while (!viewer.wasStopped()){
+            cout << "show pointcloud" << endl;
+        } 
+
+        if(ex_cal.processPointCloud(pointcloud, roi_pointcloud, calib::Param::POINTCLOUD_THRESHOLD)){
+            cout << "No." << i << " pointcloud's width:" << pointcloud->width << ", height:" << pointcloud->height << endl;
+            cout << "No." << i << " roi_pointcloud's width:" << roi_pointcloud->width << ", height:" << roi_pointcloud->height << endl;
+        }else{
+            cout << "Process PointCloud failed !" << endl;
+            return -1;
+        } 
+
+        string ply_path = "/home/yuguanfeng/celex_livox_calibration/data/lidar/1.ply" ;
+
+        if (pcl::io::loadPLYFile<pcl::PointXYZ>(ply_path, *pointcloud) == -1) {       
+            PCL_ERROR("PointCloud loading failed !\n");
+            system("pause");
+            return -1;
+        }
+
+    }
+
+    
 
     //while(1){
 
@@ -82,66 +150,11 @@ int main(void){
             return -1;
         }       
 
-
-
     
         //for (int i = 0; i < calib::Param::DATASET_NUMBER; i++){
 
-/*             cout << "～～～～～～～～begin process image～～～～～～～～" << endl;
-            //读取图像，并处理得到白板所在像素集合
-            string img_path = "/home/yuguanfeng/celex_livox_calibration/data/camera/" 
-                            + std::to_string(i) + ".bmp";    //注意要绝对路径，相对路径会报错
-            cv::Mat img = cv::imread(img_path);
-            if(img.empty()){
-                cout << "Image loading failed !" << endl;
-                return -1;
-            }
-            cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);   //测试时输入时rgb图像，先进行灰度转化，实际事件相机得到就是灰度图像
-            if(ex_cal.processImage(img, roi_points, calib::Param::GRAY_THRESHOLD)){
-                cout << "The number of roi_points in No." << i << " image is " << roi_points.size() << endl << endl;
-            }else{
-                cout << "Process image failed !" << endl;
-                return -1;
-            } */
 
-/*             cout << "～～～～～～～～begin process pointcloud～～～～～～～～" << endl;
-            //读取点云，并处理得到白板所在点云集合
-    //        string ply_path = "/home/yuguanfeng/celex_livox_calibration/data/lidar/" 
-    //                         + std::to_string(i) + ".ply";    //注意要绝对路径，相对路径会报错
-            string ply_path = "/home/yuguanfeng/celex_livox_calibration/data/lidar/0.ply" ;
-            if (pcl::io::loadPLYFile<pcl::PointXYZ>(ply_path, *pointcloud) == -1) {       
-                PCL_ERROR("PointCloud loading failed !\n");
-                system("pause");
-                return -1;
-            }
 
-            if(ex_cal.processPointCloud(pointcloud, roi_pointcloud, calib::Param::POINTCLOUD_THRESHOLD)){
-                cout << "No." << i << " pointcloud's width:" << pointcloud->width << ", height:" << pointcloud->height << endl;
-                cout << "No." << i << " roi_pointcloud's width:" << roi_pointcloud->width << ", height:" << roi_pointcloud->height << endl;
-            }else{
-                cout << "Process PointCloud failed !" << endl;
-                return -1;
-            } */
-
-            //string ply_path = "/home/yuguanfeng/celex_livox_calibration/data/lidar/1.ply" ;
-
-/*             if (pcl::io::loadPLYFile<pcl::PointXYZ>(ply_path, *pointcloud) == -1) {       
-                PCL_ERROR("PointCloud loading failed !\n");
-                system("pause");
-                return -1;
-            } */
-
-/*             pcl::PLYReader reader;
-            reader.read(ply_path, *pointcloud);
-            cout << "test6......." << endl;
-            cout << "pointcloud's width:" << pointcloud->width << ", height:" << pointcloud->height << endl; */
-
-/*             pcl::visualization::CloudViewer viewer("PointCloud Viewer");
-            viewer.showCloud(pointcloud);
-            while (!viewer.wasStopped()){
-                cout << "show pointcloud" << endl;
-            } */
-    
         //}
 
 
