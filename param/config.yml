@@ -6,13 +6,13 @@ image_width: 640
 image_height: 480
 square_size: 35
 
-#640x480
+#640x480 由RGB2XYZ中计算而来
 camera_matrix: !!opencv-matrix
    rows: 3
    cols: 3
    dt: d
-   data: [452.810033210447, 0, 307.514523830436,
-          0.,433.649632254521, 232.804956809039,
+   data: [5333.310033210447, 0, 2816.514523830436,
+          0.,5333.349632254521, 1408.804956809039,
           0., 0., 1. ]
 distortion_coefficients: !!opencv-matrix
    rows: 5
@@ -20,13 +20,15 @@ distortion_coefficients: !!opencv-matrix
    dt: d
    data: [-0.346029396127828,0.118312006703833,0.000278020655464680,-0.00121469675043767,0.0216094331403231]
 
-offset_x: 235
-offset_y: 95
-offset_z: 0
-angle_x: 0
-angle_y: 0
-angle_z: 90
+#Extrinsic parameters init 以相机坐标系为参考坐标系
+offset_x: 10
+offset_y: 100
+offset_z: 10
+angle_x: 3
+angle_y: -90     #再绕动y’_camera轴转-90
+angle_z: 90      #先绕z_camera轴转90度
 
+#Iteration
 step_offset: 10  #mm
 step_angle: 1    #degree
 max_hit_rate: 0.98
