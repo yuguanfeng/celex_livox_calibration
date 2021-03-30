@@ -97,12 +97,12 @@ bool ExtriCal::calculateT(cv::Mat& _T, float _tran_x, float _tran_y, float _tran
 /**
  * @brief 将点云投影到像素
  */
-bool ExtriCal::project(cv::Mat _lidar_point, cv::Point2f& _pixel_point，cv::Mat _T){
+bool ExtriCal::project(cv::Point3f _3d_point, cv::Point2f& _pixel_point, cv::Mat _T){
     //将3x1的点云，转换为4x1的世界坐标，因为外参是4x4
     cv::Mat world_point = cv::Mat(4,1,CV_64FC1);
-    world_point.at<double>(0,0) = _lidar_point.at<double>(0,0);
-    world_point.at<double>(1,0) = _lidar_point.at<double>(1,0);
-    world_point.at<double>(2,0) = _lidar_point.at<double>(2,0);
+    world_point.at<double>(0,0) = _3d_point.x;
+    world_point.at<double>(1,0) = _3d_point.y;
+    world_point.at<double>(2,0) = _3d_point.z;
     world_point.at<double>(3,0) = 1;
     cout << "--------point in world--------" << endl;
     cout << world_point << endl;
