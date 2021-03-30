@@ -32,6 +32,12 @@ namespace calib{
             static float MAX_HIT_RATE;//上靶率的上限
             static int MAX_ITER_NUMBER;//迭代次数的上限
 
+            //调试相关
+            static int DEBUG_SHOW_IMAGE;      //显示图像
+            static int DEBUG_SHOW_POINTCLOUD; //显示点云
+            static int DEBUG_SHOW_COORDINATE; //显示投影时具体坐标
+            static int DEBUG_PROCESS;         //显示处理数据相关
+            static int DEBUG_CALCULATE;       //显示计算上靶率相关
     };
 }
 

@@ -30,4 +30,10 @@ namespace calib{
     float Param::MAX_HIT_RATE = 0;
     int Param::MAX_ITER_NUMBER = 0;
 
+    int Param::DEBUG_SHOW_IMAGE = 0;
+    int Param::DEBUG_SHOW_POINTCLOUD = 0;
+    int Param::DEBUG_SHOW_COORDINATE = 0;
+    int Param::DEBUG_PROCESS = 0;
+    int Param::DEBUG_CALCULATE = 0;
+
 }
