@@ -25,6 +25,19 @@ namespace calib{
     float Param::ANGLE_Y = 0;
     float Param::ANGLE_Z = 0;
 
+    float Param::X_UP = 0;
+    float Param::X_DOWN = 0;
+    float Param::Y_UP = 0;
+    float Param::Y_DOWN = 0;
+    float Param::Z_UP = 0;
+    float Param::Z_DOWN = 0;
+    float Param::ANGLEX_UP = 0;
+    float Param::ANGLEX_DOWN = 0;
+    float Param::ANGLEY_UP = 0;
+    float Param::ANGLEY_DOWN = 0;
+    float Param::ANGLEZ_UP = 0;
+    float Param::ANGLEZ_DOWN = 0;
+
     float Param::STEP_OFFSET = 0;
     float Param::STEP_ANGLE = 0;
     float Param::MAX_HIT_RATE = 0;

@@ -21,12 +21,10 @@ bool ExtriCal::processImage(cv::Mat& _frame, vector<cv::Point2f>& _roi_points, i
         cv::imshow("img_src",img);
     }
 
-//    int row = img.rows;
-//    int col = img.cols;
-    int row = 50;
-    int col = 50;
+    int row = img.rows;
+    int col = img.cols;
 
-    //用指针访问像素
+    //用指针访问像素,速度快些
     uchar *p;
     for(int i = 0; i < row; i++){
         p = img.ptr<uchar>(i);          //获得每行首地址

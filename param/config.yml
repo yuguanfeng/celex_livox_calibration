@@ -27,12 +27,25 @@ offset_z: 10
 angle_x: 3
 angle_y: -90     #再绕动y’_camera轴转-90
 angle_z: 90      #先绕z_camera轴转90度
+#上下限
+x_up: 20
+x_down: 0
+y_up: 110
+y_dowm: -90
+z_up: 20
+z_down: 0
+angleX_up: 13
+angleX_down: -7
+angelY_up: -80
+angleY_down: -100
+angleZ_up: 100
+angleZ_down: 80
 
 #Iteration
-step_offset: 10  #mm
+step_offset: 1  #mm
 step_angle: 1    #degree
 max_hit_rate: 0.98
-max_iter_number: 2   #实际迭代3次
+max_iter_number: 20   #实际迭代21次
 
 #CameraSet
 width : 640
@@ -40,7 +53,7 @@ height : 480
 
 #Process
 dataset_number: 5
-gray_threshold: 155
+gray_threshold: 245
 pointcloud_threshold: 200
 
 #Debug
@@ -48,6 +61,6 @@ debug_show_image: 0
 debug_show_pointcloud: 0
 debug_show_coordinate: 0
 debug_process: 0
-debug_calculate: 1
+debug_calculate: 0
 
 

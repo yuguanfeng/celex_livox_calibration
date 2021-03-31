@@ -26,6 +26,20 @@ namespace calib{
             static float ANGLE_Y;//相机坐标系与雷达坐标系Y轴的旋转角度
             static float ANGLE_Z;//相机坐标系与雷达坐标系Z轴的旋转角度
 
+            //外参上下限
+            static float X_UP;
+            static float X_DOWN;
+            static float Y_UP;
+            static float Y_DOWN;
+            static float Z_UP;
+            static float Z_DOWN;
+            static float ANGLEX_UP;
+            static float ANGLEX_DOWN;
+            static float ANGLEY_UP;
+            static float ANGLEY_DOWN;
+            static float ANGLEZ_UP;
+            static float ANGLEZ_DOWN;
+
             //迭代参数
             static float STEP_OFFSET;//每次增加的平移量
             static float STEP_ANGLE;//每次增加的旋转角度值

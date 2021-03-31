@@ -25,8 +25,8 @@ void LoadParam(){
 
     fs["camera_matrix"] >> calib::Param::camera_matrix;
     fs["distortion_coefficients"] >> calib::Param::distort;
-    cv::initUndistortRectifyMap(calib::Param::camera_matrix, calib::Param::distort, cv::noArray(), cv::noArray(),
-                                cv::Size(calib::Param::WIDTH, calib::Param::HEIGHT), CV_32FC1, calib::Param::MAPX, calib::Param::MAPY);
+//   cv::initUndistortRectifyMap(calib::Param::camera_matrix, calib::Param::distort, cv::noArray(), cv::noArray(),
+//                                cv::Size(calib::Param::WIDTH, calib::Param::HEIGHT), CV_32FC1, calib::Param::MAPX, calib::Param::MAPY);
 
     fs["width"] >> calib::Param::WIDTH;
     fs["height"] >> calib::Param::HEIGHT;
@@ -37,6 +37,19 @@ void LoadParam(){
     fs["angle_x"] >> calib::Param::ANGLE_X;
     fs["angle_y"] >> calib::Param::ANGLE_Y;
     fs["angle_z"] >> calib::Param::ANGLE_Z;
+
+    fs["x_up"] >> calib::Param::X_UP;
+    fs["x_down"] >> calib::Param::X_DOWN;
+    fs["y_up"] >> calib::Param::Y_UP;
+    fs["y_down"] >> calib::Param::Y_DOWN;
+    fs["z_up"] >> calib::Param::Z_UP;
+    fs["z_down"] >> calib::Param::Z_DOWN;
+    fs["angleX_up"] >> calib::Param::ANGLEX_UP;
+    fs["angleX_down"] >> calib::Param::ANGLEX_DOWN;
+    fs["angleY_up"] >> calib::Param::ANGLEY_UP;
+    fs["angleY_down"] >> calib::Param::ANGLEY_DOWN;
+    fs["angleZ_up"] >> calib::Param::ANGLEZ_UP;
+    fs["angleZ_down"] >> calib::Param::ANGLEZ_DOWN;
 
     fs["step_offset"] >> calib::Param::STEP_OFFSET;
     fs["step_angle"] >> calib::Param::STEP_ANGLE;
@@ -97,39 +110,15 @@ int main(void){
             return -1;
         }
         cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);   //测试时输入时rgb图像，先进行灰度转化，实际事件相机得到就是灰度图像
-/*         if(ex_cal.processImage(img, roi_points, calib::Param::GRAY_THRESHOLD)){
+        if(ex_cal.processImage(img, roi_points, calib::Param::GRAY_THRESHOLD)){
             if(calib::Param::DEBUG_PROCESS == 1){
                 cout << "The number of roi_points in No." << i << " image is " << roi_points.size() << endl;
             } 
         }else{
             cout << "Process image failed !" << endl;
                 return -1;
-        } */
-        roi_points.push_back(cv::Point2f(2,2143)) ;
-        roi_points.push_back(cv::Point2f(-53,2024));
-        roi_points.push_back(cv::Point2f(-249,1398));
-        roi_points.push_back(cv::Point2f(-261,1372));
-        roi_points.push_back(cv::Point2f(-411,1140));
-        roi_points.push_back(cv::Point2f(-419,1130));
-        roi_points.push_back(cv::Point2f(-852,919));
-        roi_points.push_back(cv::Point2f(-855,874));
-        roi_points.push_back(cv::Point2f(-849,827));
-
-        roi_points.push_back(cv::Point2f(-0,2195));
-        roi_points.push_back(cv::Point2f(-58,2077));
-        roi_points.push_back(cv::Point2f(-270,1426));
-        roi_points.push_back(cv::Point2f(-432,1186));
-        roi_points.push_back(cv::Point2f(-886,920));
-
-        roi_points.push_back(cv::Point2f(-39,1982)) ;
-        roi_points.push_back(cv::Point2f(-246,1331));
-        roi_points.push_back(cv::Point2f(-389,1097));
-        roi_points.push_back(cv::Point2f(-413,1062));
-        roi_points.push_back(cv::Point2f(-822,838));
-        roi_points.push_back(cv::Point2f(-823,796));
-
+        }
         roi_points_set.push_back(roi_points);
-
         //清空vector数据，否则会累计
         roi_points.clear();
 
@@ -162,6 +151,7 @@ int main(void){
             cout << "Process PointCloud failed !" << endl;
             return -1;
         }  */
+        
         if(calib::Param::DEBUG_PROCESS == 1){
             cout << "～～～～～～～～begin read txt～～～～～～～～" << endl;
         }
@@ -191,6 +181,7 @@ int main(void){
 
     }
 
+    srand(time(0));     //以系统时间为随机数种子，避免每次运行产生随机数列相同
     int iter_number = 0;
     float last_hit_rate = 0;
     int best_iter = 0;
@@ -202,16 +193,106 @@ int main(void){
         iter_number++;    //计算迭代次数
         cout << endl << "～～～～～～～～Iteration " << iter_number << "～～～～～～～～" << endl;
 
+        ////在每一次迭代开始，改变任意轴的平移量和绕任意轴旋转量【随机选择】
+        int step_flag = (rand()%(12-0))+0;
+        /* cout << step_flag << endl; */
+        switch (step_flag)
+        {
+        case 0:
+            tran_x = tran_x + calib::Param::STEP_OFFSET;
+            /* cout << "tran_x ++" << endl; */
+            break;
+        case 1:
+            tran_x = tran_x - calib::Param::STEP_OFFSET;
+            /* cout << "tran_x --" << endl; */
+            break;
+        case 2:
+            tran_y = tran_y + calib::Param::STEP_OFFSET;
+            /* cout << "tran_y ++" << endl; */
+            break;
+        case 3:
+            tran_y = tran_y - calib::Param::STEP_OFFSET;
+            /* cout << "tran_y --" << endl; */
+            break;
+        case 4:
+            tran_z = tran_z + calib::Param::STEP_OFFSET;
+            /* cout << "tran_z ++" << endl; */
+            break;
+        case 5:
+            tran_z = tran_z - calib::Param::STEP_OFFSET;
+            /* cout << "tran_z --" << endl; */
+            break;
+        case 6:
+            yaw = yaw + calib::Param::STEP_ANGLE / 180 * CV_PI;
+            /* cout << "yaw ++ " << endl; */
+            break;
+        case 7:
+            yaw = yaw - calib::Param::STEP_ANGLE / 180 * CV_PI;
+            /* cout << "yaw --" << endl; */
+            break;
+        case 8:
+            pitch = pitch + calib::Param::STEP_ANGLE / 180 * CV_PI;
+            /* cout << "pitch ++" << endl; */
+            break;
+        case 9:
+            pitch = pitch - calib::Param::STEP_ANGLE / 180 * CV_PI;
+            /* cout << "pitch --" << endl; */
+            break;
+        case 10:
+            roll = roll + calib::Param::STEP_ANGLE / 180 * CV_PI;
+            /* cout << "roll ++" << endl; */
+            break;
+        case 11:
+            roll = roll - calib::Param::STEP_ANGLE / 180 * CV_PI;
+            /* cout << "roll --" << endl; */
+            break;            
+        default:
+            cout << "step_flag error!" << endl;
+            return -1;
+        }
+
+        //判断是否到达上下限，如到达则不再增加或减少
+        if(tran_x > calib::Param::X_UP){
+            tran_x = calib::Param::X_UP;
+        }
+        if(tran_x < calib::Param::X_DOWN){
+            tran_x = calib::Param::X_DOWN;
+        }
+        if(tran_y > calib::Param::Y_UP){
+            tran_y = calib::Param::Y_UP;
+        }
+        if(tran_y < calib::Param::Y_DOWN){
+            tran_y = calib::Param::Y_DOWN;
+        }
+        if(tran_z > calib::Param::Z_UP){
+            tran_z = calib::Param::Z_UP;
+        }
+        if(tran_z < calib::Param::Z_DOWN){
+            tran_z = calib::Param::Z_DOWN;
+        }
+        if(yaw > (calib::Param::ANGLEZ_UP/180*CV_PI)){
+            yaw = calib::Param::ANGLEZ_UP/180*CV_PI;
+        }
+        if(yaw < (calib::Param::ANGLEZ_DOWN/180*CV_PI)){
+            yaw = calib::Param::ANGLEZ_DOWN/180*CV_PI;
+        }
+        if(pitch > (calib::Param::ANGLEY_UP/180*CV_PI)){
+            pitch = calib::Param::ANGLEY_UP/180*CV_PI;
+        }
+        if(pitch < (calib::Param::ANGLEY_DOWN/180*CV_PI)){
+            pitch = calib::Param::ANGLEY_DOWN/180*CV_PI;
+        }
+        if(roll > (calib::Param::ANGLEX_UP/180*CV_PI)){
+            roll = calib::Param::ANGLEX_UP/180*CV_PI;
+        }
+        if(roll < (calib::Param::ANGLEX_DOWN/180*CV_PI)){
+            roll = calib::Param::ANGLEX_DOWN/180*CV_PI;
+        }           
+/*         cout << tran_x << " " << tran_y << " " << tran_z << endl;
+        cout << yaw << " " << pitch << " " << roll << endl; */
+
         //P_camera = T_l2c * P_lidar; 相机坐标系为参考坐标系，雷达坐标系为动坐标系
         cv::Mat T_l2c = cv::Mat::zeros(cv::Size(4,4), CV_64FC1);
-        //在每一次迭代开始，改变z轴平移量和绕z轴旋转量
-        tran_x = tran_x;
-        tran_y = tran_y;
-        tran_z = tran_z + calib::Param::STEP_OFFSET;
-        yaw = yaw + calib::Param::STEP_ANGLE / 180 * CV_PI;
-        pitch = pitch;
-        roll = roll;
-
         cout << "～～～～～～～～begin calculate T_Lidar2Camera～～～～～～～～" << endl;
         if(ex_cal.calculateT(T_l2c, tran_x, tran_y, tran_z, yaw, pitch, roll)){
             cout << "The transform matrix from lidar to camera is: " << endl << T_l2c << endl;
