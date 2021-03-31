@@ -124,16 +124,16 @@ bool ExtriCal::project(cv::Point3f _3d_point, cv::Point2f& _pixel_point, cv::Mat
         matrix_3x4_c2p.at<double>(i,3) = 0;
     }
     if(calib::Param::DEBUG_SHOW_COORDINATE == 1){
-        cout << "----------matrix_3x4_c2p--------" << endl;
-        cout << matrix_3x4_c2p << endl;
+/*         cout << "----------matrix_3x4_c2p--------" << endl;
+        cout << matrix_3x4_c2p << endl; */
     }
 
     //由3x4的变换矩阵得到3x1的像素平面内的齐次坐标
     cv::Mat pixel_point = cv::Mat(3,1,CV_64FC1);
     pixel_point = matrix_3x4_c2p * camera_point / camera_point.at<double>(2,0);//除Z(深度)是得到归一化平面的坐标
     if(calib::Param::DEBUG_SHOW_COORDINATE == 1){
-        cout << "--------point in image(3x1)--------" << endl;
-        cout << pixel_point << endl;
+/*         cout << "--------point in image(3x1)--------" << endl;
+        cout << pixel_point << endl; */
     }
 
     //赋值到Point2f的像素坐标
@@ -151,10 +151,13 @@ bool ExtriCal::project(cv::Point3f _3d_point, cv::Point2f& _pixel_point, cv::Mat
  * @brief 判断是否中靶
  */
 int ExtriCal::judgeHit(cv::Point2f _pixel_point, vector<cv::Point2f> _roi_points){
-
-    for(int i = 0; i < _roi_points.size(); i++){
-        if(fabs(_pixel_point.x - _roi_points[i].x) < 1e-6){
-            if(fabs(_pixel_point.y - _roi_points[i].y) < 1e-6){
+    
+//    cout << _pixel_point.x << "   " << _pixel_point.y << endl;
+    for(int i = 0; i < _roi_points.size(); i++){ 
+//        cout << _roi_points[i] << endl;
+        if((int)_pixel_point.x == (int)_roi_points[i].x){//坐标化为整形进行比较，否则浮点型比较太难达到了
+            if((int)_pixel_point.y == (int)_roi_points[i].y){
+//                cout << "Hit !" << endl;
                 return 1;
             }else{
                 continue;

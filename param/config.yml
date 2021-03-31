@@ -32,7 +32,7 @@ angle_z: 90      #先绕z_camera轴转90度
 step_offset: 10  #mm
 step_angle: 1    #degree
 max_hit_rate: 0.98
-max_iter_number: 3
+max_iter_number: 2   #实际迭代3次
 
 #CameraSet
 width : 640
@@ -46,8 +46,8 @@ pointcloud_threshold: 200
 #Debug
 debug_show_image: 0
 debug_show_pointcloud: 0
-debug_show_coordinate: 1
+debug_show_coordinate: 0
 debug_process: 0
-debug_calculate: 0
+debug_calculate: 1
 
 

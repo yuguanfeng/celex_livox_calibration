@@ -97,14 +97,37 @@ int main(void){
             return -1;
         }
         cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);   //测试时输入时rgb图像，先进行灰度转化，实际事件相机得到就是灰度图像
-        if(ex_cal.processImage(img, roi_points, calib::Param::GRAY_THRESHOLD)){
+/*         if(ex_cal.processImage(img, roi_points, calib::Param::GRAY_THRESHOLD)){
             if(calib::Param::DEBUG_PROCESS == 1){
                 cout << "The number of roi_points in No." << i << " image is " << roi_points.size() << endl;
             } 
         }else{
             cout << "Process image failed !" << endl;
                 return -1;
-        }
+        } */
+        roi_points.push_back(cv::Point2f(2,2143)) ;
+        roi_points.push_back(cv::Point2f(-53,2024));
+        roi_points.push_back(cv::Point2f(-249,1398));
+        roi_points.push_back(cv::Point2f(-261,1372));
+        roi_points.push_back(cv::Point2f(-411,1140));
+        roi_points.push_back(cv::Point2f(-419,1130));
+        roi_points.push_back(cv::Point2f(-852,919));
+        roi_points.push_back(cv::Point2f(-855,874));
+        roi_points.push_back(cv::Point2f(-849,827));
+
+        roi_points.push_back(cv::Point2f(-0,2195));
+        roi_points.push_back(cv::Point2f(-58,2077));
+        roi_points.push_back(cv::Point2f(-270,1426));
+        roi_points.push_back(cv::Point2f(-432,1186));
+        roi_points.push_back(cv::Point2f(-886,920));
+
+        roi_points.push_back(cv::Point2f(-39,1982)) ;
+        roi_points.push_back(cv::Point2f(-246,1331));
+        roi_points.push_back(cv::Point2f(-389,1097));
+        roi_points.push_back(cv::Point2f(-413,1062));
+        roi_points.push_back(cv::Point2f(-822,838));
+        roi_points.push_back(cv::Point2f(-823,796));
+
         roi_points_set.push_back(roi_points);
 
         //清空vector数据，否则会累计
@@ -222,7 +245,8 @@ int main(void){
                     number_hit++;
                 }
             }
-            hit_rate = number_hit / number_3d_points;
+            hit_rate = (float)number_hit / (float)number_3d_points;//不转化为浮点型的话
+                                                                   //则先整型除法再转化为浮点数，结果一般为0
 
             if(calib::Param::DEBUG_CALCULATE == 1){
                 cout << "The number of hit in No." << i << " dataset is " << number_hit << endl;
@@ -234,7 +258,7 @@ int main(void){
             total_number_3d_points = total_number_3d_points + number_3d_points;
         }
 
-        total_hit_rate = total_number_hit / total_number_3d_points;
+        total_hit_rate = (float)total_number_hit / (float)total_number_3d_points;
         last_hit_rate = total_hit_rate;
         cout << "～～～～～～～～begin calculate total hit-rate～～～～～～～～" << endl;
         cout << "The total number of hit is " << total_number_hit << endl;
