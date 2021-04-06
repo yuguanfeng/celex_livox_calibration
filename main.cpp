@@ -31,6 +31,8 @@ void LoadParam(){
     fs["width"] >> calib::Param::WIDTH;
     fs["height"] >> calib::Param::HEIGHT;
 
+    fs["if_event_camera"] >> calib::Param::IF_EVENT_CAMERA;
+
     fs["offset_x"] >> calib::Param::OFFSET_X;
     fs["offset_y"] >> calib::Param::OFFSET_Y;
     fs["offset_z"] >> calib::Param::OFFSET_Z;
@@ -95,28 +97,38 @@ int main(void){
     //在外参迭代计算之前，先对图像进行处理，得到DATASET_NUMBERD个像素集；
     //对点云坐标进行读取（默认是已经用cloudcompare处理后的），得到DATASET_NUMBER个三维点集
     for (int i = 0; i < calib::Param::DATASET_NUMBER; i++){
-
         if(calib::Param::DEBUG_PROCESS == 1){
             cout << "～～～～～～～～No. " << i << "～～～～～～～～" << endl;
             cout << "～～～～～～～～begin process image～～～～～～～～" << endl;
         }
 
         //读取图像，并处理得到白板所在像素集合
-        string img_path = "/home/yuguanfeng/celex_livox_calibration/data/camera/" 
-                        + std::to_string(i) + ".bmp";    //注意要绝对路径，相对路径会报错
+//        string img_path = "/home/yuguanfeng/celex_livox_calibration/data/camera/" 
+//                        + std::to_string(i) + ".JPG";    //注意要绝对路径，相对路径会报错
+        string img_path = "/home/yuguanfeng/celex_livox_calibration/data/camera/8.JPG";    //注意要绝对路径，相对路径会报错
         cv::Mat img = cv::imread(img_path);
         if(img.empty()){
             cout << "Image loading failed !" << endl;
             return -1;
         }
-        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);   //测试时输入时rgb图像，先进行灰度转化，实际事件相机得到就是灰度图像
-        if(ex_cal.processImage(img, roi_points, calib::Param::GRAY_THRESHOLD)){
-            if(calib::Param::DEBUG_PROCESS == 1){
-                cout << "The number of roi_points in No." << i << " image is " << roi_points.size() << endl;
-            } 
+        if(calib::Param::IF_EVENT_CAMERA == 1){
+            if(ex_cal.processEventImage(img, roi_points)){
+                if(calib::Param::DEBUG_PROCESS == 1){
+                    cout << "The number of roi_points in No." << i << " image is " << roi_points.size() << endl;
+                } 
+            }else{
+                cout << "Process image failed !" << endl;
+                    return -1;
+            }
         }else{
-            cout << "Process image failed !" << endl;
-                return -1;
+            if(ex_cal.processRGBImage(img, roi_points)){
+                if(calib::Param::DEBUG_PROCESS == 1){
+                    cout << "The number of roi_points in No." << i << " image is " << roi_points.size() << endl;
+                } 
+            }else{
+                cout << "Process image failed !" << endl;
+                    return -1;
+            }
         }
         roi_points_set.push_back(roi_points);
         //清空vector数据，否则会累计
@@ -155,15 +167,17 @@ int main(void){
         if(calib::Param::DEBUG_PROCESS == 1){
             cout << "～～～～～～～～begin read txt～～～～～～～～" << endl;
         }
-        string txt_path = "/home/yuguanfeng/celex_livox_calibration/data/lidar/" 
-                        + std::to_string(i) + ".txt";    //注意要绝对路径，相对路径会报错
+//        string txt_path = "/home/yuguanfeng/celex_livox_calibration/data/lidar/" 
+//                        + std::to_string(i) + ".txt";    //注意要绝对路径，相对路径会报错
+        string txt_path = "/home/yuguanfeng/celex_livox_calibration/data/lidar/8.txt";    //注意要绝对路径，相对路径会报错
         txt_reader.open(txt_path);
         assert(txt_reader.is_open());
 
         cv::Point3f temp;
         float temp1 = 0, temp2 = 0, temp3 = 0;
+        float temp4 = 0, temp5 = 0, temp6 = 0, temp7 = 0;//rgb+indenity 这里只读没保存
         for(int j = 0; !txt_reader.eof(); j++){
-            txt_reader >> temp1 >> temp2 >> temp3;
+            txt_reader >> temp1 >> temp2 >> temp3 >> temp4 >> temp5 >> temp6 >> temp7;
             temp.x = temp1;
             temp.y = temp2;
             temp.z = temp3;
@@ -171,7 +185,9 @@ int main(void){
         }
         if(calib::Param::DEBUG_PROCESS == 1){
             cout << "The number of roi_3d_points in No." << i << " pointcloud is " << roi_3d_points.size() << endl;
-            cout << roi_3d_points[0].x << " " << roi_3d_points[0].y << " " << roi_3d_points[0].z << endl << endl;
+            cout << "roi_3d_points[0].x: " << roi_3d_points[0].x 
+             << "    roi_3d_points[0].y: " << roi_3d_points[0].y
+             << "    roi_3d_points[0].z: " << roi_3d_points[0].z << endl << endl;
         }        
         roi_3d_points_set.push_back(roi_3d_points);
 
@@ -188,7 +204,7 @@ int main(void){
     float best_hit_rate = 0;
     cv::Mat best_T_l2c = cv::Mat::zeros(cv::Size(4,4), CV_64FC1);
 
-    while(1){
+//    while(1){
 
         iter_number++;    //计算迭代次数
         cout << endl << "～～～～～～～～Iteration " << iter_number << "～～～～～～～～" << endl;
@@ -291,7 +307,7 @@ int main(void){
 /*         cout << tran_x << " " << tran_y << " " << tran_z << endl;
         cout << yaw << " " << pitch << " " << roll << endl; */
 
-        //P_camera = T_l2c * P_lidar; 相机坐标系为参考坐标系，雷达坐标系为动坐标系
+/*         //P_camera = T_l2c * P_lidar; 相机坐标系为参考坐标系，雷达坐标系为动坐标系
         cv::Mat T_l2c = cv::Mat::zeros(cv::Size(4,4), CV_64FC1);
         cout << "～～～～～～～～begin calculate T_Lidar2Camera～～～～～～～～" << endl;
         if(ex_cal.calculateT(T_l2c, tran_x, tran_y, tran_z, yaw, pitch, roll)){
@@ -372,7 +388,7 @@ int main(void){
 
     cout << "Best iter is " << best_iter << endl;
     cout << "Best hit-rate is " << best_hit_rate << endl;
-    cout << "Best T_l2c is: " << endl << best_T_l2c << endl;
+    cout << "Best T_l2c is: " << endl << best_T_l2c << endl; */
 
     return 0;
 

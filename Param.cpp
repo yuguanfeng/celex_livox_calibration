@@ -18,6 +18,8 @@ namespace calib{
     Mat Param::MAPX;
     Mat Param::MAPY;
 
+    int Param::IF_EVENT_CAMERA = 0;
+
     float Param::OFFSET_X = 0;
     float Param::OFFSET_Y = 0;
     float Param::OFFSET_Z = 0;

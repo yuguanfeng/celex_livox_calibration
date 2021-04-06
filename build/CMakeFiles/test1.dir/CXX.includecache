@@ -6,6 +6,12 @@
 
 #IncludeRegexTransform: 
 
+/home/yuguanfeng/celex_livox_calibration/ExtriCal.cpp
+ExtriCal.h
+/home/yuguanfeng/celex_livox_calibration/ExtriCal.h
+Param.h
+/home/yuguanfeng/celex_livox_calibration/Param.h
+
 /home/yuguanfeng/celex_livox_calibration/ExtriCal.h
 opencv2/opencv.hpp
 -
@@ -35,20 +41,6 @@ pcl/filters/voxel_grid.h
 -
 pcl/filters/approximate_voxel_grid.h
 -
-
-/home/yuguanfeng/celex_livox_calibration/main.cpp
-iostream
--
-string.h
--
-fstream
--
-common_PCL.h
-/home/yuguanfeng/celex_livox_calibration/common_PCL.h
-Param.h
-/home/yuguanfeng/celex_livox_calibration/Param.h
-ExtriCal.h
-/home/yuguanfeng/celex_livox_calibration/ExtriCal.h
 
 /opt/ros/kinetic/include/opencv-3.3.1-dev/opencv/cxcore.h
 opencv2/core/core_c.h

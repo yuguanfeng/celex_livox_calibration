@@ -18,6 +18,8 @@ namespace calib{
             static cv::Mat MAPX;//畸变参数
             static cv::Mat MAPY;//畸变参数
 
+            static int IF_EVENT_CAMERA;//是否为事件相机
+
             //外参初始值
             static float OFFSET_X;//相机坐标系与雷达坐标系X轴的偏移
             static float OFFSET_Y;//相机坐标系与雷达坐标系Y轴的偏移
@@ -52,6 +54,7 @@ namespace calib{
             static int DEBUG_SHOW_COORDINATE; //显示投影时具体坐标
             static int DEBUG_PROCESS;         //显示处理数据相关
             static int DEBUG_CALCULATE;       //显示计算上靶率相关
+
     };
 }
 

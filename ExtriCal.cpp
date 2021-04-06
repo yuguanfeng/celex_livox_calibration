@@ -10,9 +10,9 @@ typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 ExtriCal::ExtriCal(){}
 
 /**
- * @brief 处理图像，选出一定阈值内的点集，作为靶子
+ * @brief 处理事件相机输出灰度图像，选出一定阈值内的点集，作为靶子
  */
-bool ExtriCal::processImage(cv::Mat& _frame, vector<cv::Point2f>& _roi_points, int _gray_threshold){
+bool ExtriCal::processEventImage(cv::Mat _frame, vector<cv::Point2f>& _roi_points){
 
     cv::Mat img = _frame.clone();
 
@@ -30,7 +30,7 @@ bool ExtriCal::processImage(cv::Mat& _frame, vector<cv::Point2f>& _roi_points, i
         p = img.ptr<uchar>(i);          //获得每行首地址
         for(int j = 0; j < col; j++){
             int gray = p[j];
-            if(gray > _gray_threshold){      //大于阈值即为板上的点 
+            if(gray > calib::Param::GRAY_THRESHOLD){      //大于阈值即为板上的点 
                 cv::Point2f roi_point = cv::Point2f((float)i,(float)j);
                 _roi_points.push_back(roi_point);
                 p[j] = 0;
@@ -48,6 +48,122 @@ bool ExtriCal::processImage(cv::Mat& _frame, vector<cv::Point2f>& _roi_points, i
 
     return true;
 }
+
+/**
+ * @brief 处理传统相机输出彩色图像，选出一定阈值内的点集，作为靶子
+ */
+bool ExtriCal::processRGBImage(cv::Mat _frame, vector<cv::Point2f>& _roi_points){
+
+    cv::Mat img_src = _frame.clone();
+//    cv::cvtColor(img_src, img_src, cv::COLOR_BGR2GRAY);
+    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
+        cv::namedWindow("img_src",cv::WINDOW_NORMAL);
+        cv::imshow("img_src",img_src);
+    } 
+
+    cv::Mat img;
+    cv::resize(img_src, img, cv::Size(1280, 800));
+    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
+        cv::namedWindow("img_resize",cv::WINDOW_NORMAL);
+        cv::imshow("img_resize",img);
+    } 
+
+/*     cv::Rect r = cv::Rect(580,355,150,120);
+    cv::Mat mask = cv::Mat::zeros(img.size(),CV_8UC1);
+    mask(r).setTo(255);
+    cv::Mat img_roi; 
+    img.copyTo(img_roi, mask); */
+    cv::Mat img_roi = img(cv::Rect(550,350,200,150));
+    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
+        cv::namedWindow("img_roi",cv::WINDOW_NORMAL);
+        cv::imshow("img_roi",img_roi);
+    } 
+
+    vector<cv::Point2f> corners;
+    cv::Size PatSize;
+    PatSize.width = 5;
+    PatSize.height = 5;
+
+	bool found=cv::findChessboardCorners(img_roi, PatSize, corners, CV_CALIB_CB_ADAPTIVE_THRESH);
+	if(!found){
+		cout << "find corners failured!" << endl;
+        return -1;
+	}else{
+        cout << "find corners" << endl;
+    }
+
+    float square = (corners[4].x - corners[0].x)/4;
+    cout << "square: " << square << endl;
+    cv::Point2f left_top = cv::Point2f(corners[0].x-2*square, corners[0].y-square);
+    cv::Point2f right_down = cv::Point2f(corners[24].x+2*square, corners[24].y+square);
+    cout << "left_top: " << left_top << " " << "right_down: " << right_down << endl;
+
+    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
+	    cv::drawChessboardCorners(img_roi, PatSize, corners, found);
+        cv::circle(img_roi, left_top, 5, cv::Scalar(0,0,255),2);
+        cv::circle(img_roi, right_down, 5, cv::Scalar(0,0,255),2);
+        cv::namedWindow("chessboard corners",cv::WINDOW_NORMAL);
+	    cv::imshow("chessboard corners",img_roi);
+        cv::waitKey(0);
+
+    }
+
+    for(int i = 4140; i < 4400 ; i++){
+        for(int j = 2710; j < 2980 ; j++){
+            cv::Point2f temp_point = cv::Point2f((float)i,(float)j);
+            _roi_points.push_back(temp_point);
+        }
+    }
+
+/*     cv::Point2f temp_point;
+    for(int i = left_top.x; i++; i < right_down.x){
+        for(int j = left_top.y; j++; j < right_down.y){
+            temp_point.x = i;
+            temp_point.y = j;
+            _roi_points.push_back(temp_point);
+        }
+    } */
+
+/*     int row = img.rows;
+    int col = img.cols;
+
+    cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+
+    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
+        cv::namedWindow("img_gray",cv::WINDOW_NORMAL);
+        cv::imshow("img_gray",img);
+    }
+
+    cv::Mat img_thre = cv::Mat::zeros(row, col, CV_8UC1);
+    cv::threshold(img, img_thre, calib::Param::GRAY_THRESHOLD, 255, cv::THRESH_BINARY); //阈值化为二值图片
+    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
+        cv::namedWindow("img_thre",cv::WINDOW_NORMAL);
+        cv::imshow("img_thre",img_thre);
+    }   
+
+    vector< vector<cv::Point> > contours;
+    vector<cv::Vec4i> hierarchy;
+    cv::findContours(img_thre, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+    cout << "轮廓before：" << contours.size() << endl;
+    if(calib::Param::DEBUG_SHOW_IMAGE == 1)
+    {
+        cv::Mat img_contours = _frame.clone();
+        cout << "contours size = " << contours.size() << endl;
+        cv::drawContours(img_contours, contours, -1, cv::Scalar(255, 0, 0), 1);
+        cv::namedWindow("img_lightlines", CV_WINDOW_NORMAL);
+        cv::imshow("img_lightlines", img_contours);
+    } */
+
+/*     if(calib::Param::DEBUG_SHOW_IMAGE == 1){
+        cv::namedWindow("img_result",cv::WINDOW_NORMAL);
+        cv::imshow("img_result",img_roi);
+        cv::waitKey(0);
+    }
+ */
+    
+    return true;
+}
+
 
 /**
  * @brief 处理点云，选出一定阈值内的点集，作为子弹
