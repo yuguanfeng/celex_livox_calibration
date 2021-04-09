@@ -1,21 +1,14 @@
 cmake_minimum_required(VERSION 3.5)
-project(test1)
+project(test)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenCV REQUIRED)
-find_package(PCL 1.2 REQUIRED)
 
-include_directories(${ROOT_SOURCE_DIR}
-					${PCL_INCLUDE_DIRS}
-)
+include_directories(${ROOT_SOURCE_DIR})
 
-link_libraries(	${PCL_LIBRARY_DIRS} 
-				${OpenCV_LIBS}
-)
-
-add_definitions(${PCL_DEFINITIONS})
+link_libraries(${OpenCV_LIBS})
 
 add_executable(${PROJECT_NAME} 
 	main.cpp
@@ -23,5 +16,4 @@ add_executable(${PROJECT_NAME}
 	Param.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} 
-${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})

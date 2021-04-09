@@ -1,8 +1,7 @@
-#include "ExtriCal.h"
 #include "Param.h"
+#include "ExtriCal.h"
 
 using namespace std;
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 /**
  * @brief 解析函数
@@ -10,39 +9,63 @@ typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 ExtriCal::ExtriCal(){}
 
 /**
- * @brief 处理事件相机输出灰度图像，选出一定阈值内的点集，作为靶子
+ * @brief 处理图像，选出四边形内的点集，作为靶子
  */
-bool ExtriCal::processEventImage(cv::Mat _frame, vector<cv::Point2f>& _roi_points){
+bool ExtriCal::processImage(cv::Mat _frame, vector<cv::Point2f> _corner_points, vector<cv::Point2f>& _roi_points){
 
-    cv::Mat img = _frame.clone();
-
+    cv::Mat img_src = _frame.clone();
+    cv::cvtColor(img_src, img_src, cv::COLOR_BGR2GRAY);
     if(calib::Param::DEBUG_SHOW_IMAGE == 1){
         cv::namedWindow("img_src",cv::WINDOW_NORMAL);
-        cv::imshow("img_src",img);
+        cv::imshow("img_src",img_src);
+    } 
+
+    cv::Mat img_resize;
+    cv::resize(img_src, img_resize, cv::Size(1280, 800));
+    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
+        cv::namedWindow("img_resize",cv::WINDOW_NORMAL);
+        cv::imshow("img_resize",img_resize);
+    } 
+
+    //这里一定要注意顺时针是按xy坐标来的，而不是图像上看着的顺时针！！！
+    cv::Point2f A = _corner_points[3];//图片左下角点
+    cv::Point2f B = _corner_points[2];//图片右下角点
+    cv::Point2f C = _corner_points[1];//图片右上角点
+    cv::Point2f D = _corner_points[0];//图片左上角点 
+
+    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
+        cv::circle(img_resize, A, 3, cv::Scalar(255,255,255),2);
+        cv::circle(img_resize, B, 3, cv::Scalar(255,255,255),2);
+        cv::circle(img_resize, C, 3, cv::Scalar(255,255,255),2);
+        cv::circle(img_resize, D, 3, cv::Scalar(255,255,255),2);
+        cv::namedWindow("img_corners",cv::WINDOW_NORMAL);
+        cv::imshow("img_corners",img_resize);
     }
-
-    int row = img.rows;
-    int col = img.cols;
-
-    //用指针访问像素,速度快些
-    uchar *p;
+    
+    int row = img_resize.rows;
+    int col = img_resize.cols;
+    float cross1,cross2,cross3,cross4;
     for(int i = 0; i < row; i++){
-        p = img.ptr<uchar>(i);          //获得每行首地址
         for(int j = 0; j < col; j++){
-            int gray = p[j];
-            if(gray > calib::Param::GRAY_THRESHOLD){      //大于阈值即为板上的点 
-                cv::Point2f roi_point = cv::Point2f((float)i,(float)j);
-                _roi_points.push_back(roi_point);
-                p[j] = 0;
+            cv::Point2f M = cv::Point2f((float)j,(float)i); //计算坐标将i,j倒换
+            cross1 = (B.x-A.x)*(M.y-A.y)-(M.x-A.x)*(B.y-A.y);
+            cross2 = (C.x-B.x)*(M.y-B.y)-(M.x-B.x)*(C.y-B.y);
+            cross3 = (D.x-C.x)*(M.y-C.y)-(M.x-C.x)*(D.y-C.y);
+            cross4 = (A.x-D.x)*(M.y-D.y)-(M.x-D.x)*(A.y-D.y);
+            //cout << cross1 << " " << cross2 << " " <<  cross3 << " " <<  cross4 << endl; 
+            if(cross1<0 && cross2<0 && cross3<0 && cross4<0){
+                img_resize.at<uchar>(i,j) = 0;
+                _roi_points.push_back(M);
+            //    cout << "IN" << endl;
             }else{
-                p[j] = 255;
+                img_resize.at<uchar>(i,j) = 255;
             }
         }
     }
 
     if(calib::Param::DEBUG_SHOW_IMAGE == 1){
         cv::namedWindow("img_roi",cv::WINDOW_NORMAL);
-        cv::imshow("img_roi",img);
+	    cv::imshow("img_roi",img_resize);
         cv::waitKey(0);
     }
 
@@ -50,154 +73,19 @@ bool ExtriCal::processEventImage(cv::Mat _frame, vector<cv::Point2f>& _roi_point
 }
 
 /**
- * @brief 处理传统相机输出彩色图像，选出一定阈值内的点集，作为靶子
+ * @brief 计算外参函数,采用欧拉旋转,相机坐标系为参考坐标系，雷达坐标系为动坐标系,P_camera = T_l2c * P_lidar
  */
-bool ExtriCal::processRGBImage(cv::Mat _frame, vector<cv::Point2f>& _roi_points){
+bool ExtriCal::calculateT(cv::Mat& _T, float _tran_x, float _tran_y, float _tran_z, float _roll, float _yaw, float _pitch){
 
-    cv::Mat img_src = _frame.clone();
-//    cv::cvtColor(img_src, img_src, cv::COLOR_BGR2GRAY);
-    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
-        cv::namedWindow("img_src",cv::WINDOW_NORMAL);
-        cv::imshow("img_src",img_src);
-    } 
-
-    cv::Mat img;
-    cv::resize(img_src, img, cv::Size(1280, 800));
-    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
-        cv::namedWindow("img_resize",cv::WINDOW_NORMAL);
-        cv::imshow("img_resize",img);
-    } 
-
-/*     cv::Rect r = cv::Rect(580,355,150,120);
-    cv::Mat mask = cv::Mat::zeros(img.size(),CV_8UC1);
-    mask(r).setTo(255);
-    cv::Mat img_roi; 
-    img.copyTo(img_roi, mask); */
-    cv::Mat img_roi = img(cv::Rect(550,350,200,150));
-    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
-        cv::namedWindow("img_roi",cv::WINDOW_NORMAL);
-        cv::imshow("img_roi",img_roi);
-    } 
-
-    vector<cv::Point2f> corners;
-    cv::Size PatSize;
-    PatSize.width = 5;
-    PatSize.height = 5;
-
-	bool found=cv::findChessboardCorners(img_roi, PatSize, corners, CV_CALIB_CB_ADAPTIVE_THRESH);
-	if(!found){
-		cout << "find corners failured!" << endl;
-        return -1;
-	}else{
-        cout << "find corners" << endl;
-    }
-
-    float square = (corners[4].x - corners[0].x)/4;
-    cout << "square: " << square << endl;
-    cv::Point2f left_top = cv::Point2f(corners[0].x-2*square, corners[0].y-square);
-    cv::Point2f right_down = cv::Point2f(corners[24].x+2*square, corners[24].y+square);
-    cout << "left_top: " << left_top << " " << "right_down: " << right_down << endl;
-
-    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
-	    cv::drawChessboardCorners(img_roi, PatSize, corners, found);
-        cv::circle(img_roi, left_top, 5, cv::Scalar(0,0,255),2);
-        cv::circle(img_roi, right_down, 5, cv::Scalar(0,0,255),2);
-        cv::namedWindow("chessboard corners",cv::WINDOW_NORMAL);
-	    cv::imshow("chessboard corners",img_roi);
-        cv::waitKey(0);
-
-    }
-
-    for(int i = 4140; i < 4400 ; i++){
-        for(int j = 2710; j < 2980 ; j++){
-            cv::Point2f temp_point = cv::Point2f((float)i,(float)j);
-            _roi_points.push_back(temp_point);
-        }
-    }
-
-/*     cv::Point2f temp_point;
-    for(int i = left_top.x; i++; i < right_down.x){
-        for(int j = left_top.y; j++; j < right_down.y){
-            temp_point.x = i;
-            temp_point.y = j;
-            _roi_points.push_back(temp_point);
-        }
-    } */
-
-/*     int row = img.rows;
-    int col = img.cols;
-
-    cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
-
-    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
-        cv::namedWindow("img_gray",cv::WINDOW_NORMAL);
-        cv::imshow("img_gray",img);
-    }
-
-    cv::Mat img_thre = cv::Mat::zeros(row, col, CV_8UC1);
-    cv::threshold(img, img_thre, calib::Param::GRAY_THRESHOLD, 255, cv::THRESH_BINARY); //阈值化为二值图片
-    if(calib::Param::DEBUG_SHOW_IMAGE == 1){
-        cv::namedWindow("img_thre",cv::WINDOW_NORMAL);
-        cv::imshow("img_thre",img_thre);
-    }   
-
-    vector< vector<cv::Point> > contours;
-    vector<cv::Vec4i> hierarchy;
-    cv::findContours(img_thre, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
-    cout << "轮廓before：" << contours.size() << endl;
-    if(calib::Param::DEBUG_SHOW_IMAGE == 1)
-    {
-        cv::Mat img_contours = _frame.clone();
-        cout << "contours size = " << contours.size() << endl;
-        cv::drawContours(img_contours, contours, -1, cv::Scalar(255, 0, 0), 1);
-        cv::namedWindow("img_lightlines", CV_WINDOW_NORMAL);
-        cv::imshow("img_lightlines", img_contours);
-    } */
-
-/*     if(calib::Param::DEBUG_SHOW_IMAGE == 1){
-        cv::namedWindow("img_result",cv::WINDOW_NORMAL);
-        cv::imshow("img_result",img_roi);
-        cv::waitKey(0);
-    }
- */
-    
-    return true;
-}
-
-
-/**
- * @brief 处理点云，选出一定阈值内的点集，作为子弹
- */
-bool ExtriCal::processPointCloud(PointCloud::Ptr _point_cloud, PointCloud::Ptr _roi_point_cloud, float _pointcloud_threshold){
-
-    if(calib::Param::DEBUG_SHOW_POINTCLOUD == 1){
-        /*pcl::visualization::CloudViewer viewer("PointCloud Viewer");
-        viewer.showCloud(_point_cloud); */
-    }
-
-    if(calib::Param::DEBUG_SHOW_POINTCLOUD == 1){
-
-    }
-    _roi_point_cloud = _point_cloud;
-
-    return true;
-    
-}
-
-/**
- * @brief 计算外参函数
- */
-bool ExtriCal::calculateT(cv::Mat& _T, float _tran_x, float _tran_y, float _tran_z, float _yaw, float _pitch, float _roll){
-
-    float r1 = cos(_yaw)*cos(_pitch);
-    float r2 = cos(_yaw)*sin(_pitch)*sin(_roll) - sin(_yaw)*cos(_roll);
-    float r3 = cos(_yaw)*sin(_pitch)*cos(_roll) + sin(_yaw)*sin(_roll);
-    float r4 = sin(_yaw)*cos(_pitch);
-    float r5 = sin(_yaw)*sin(_pitch)*sin(_roll) + cos(_yaw)*cos(_roll);
-    float r6 = sin(_yaw)*sin(_pitch)*cos(_roll) - cos(_yaw)*sin(_roll);
-    float r7 = -sin(_pitch);
-    float r8 = cos(_pitch)*sin(_roll);
-    float r9 = cos(_pitch)*cos(_roll);
+    float r1 = cos(_roll)*cos(_yaw);
+    float r2 = cos(_roll)*sin(_yaw)*sin(_pitch) - sin(_roll)*cos(_pitch);
+    float r3 = cos(_roll)*sin(_yaw)*cos(_pitch) + sin(_roll)*sin(_pitch);
+    float r4 = sin(_roll)*cos(_yaw);
+    float r5 = sin(_roll)*sin(_yaw)*sin(_pitch) + cos(_roll)*cos(_pitch);
+    float r6 = sin(_roll)*sin(_yaw)*cos(_pitch) - cos(_roll)*sin(_pitch);
+    float r7 = -sin(_yaw);
+    float r8 = cos(_yaw)*sin(_pitch);
+    float r9 = cos(_yaw)*cos(_pitch);
 
     _T = (cv::Mat_<double>(4, 4) << r1, r2, r3, _tran_x, r4, r5, r6, _tran_y, r7, r8, r9, _tran_z, 0, 0, 0, 1);
 
@@ -207,7 +95,7 @@ bool ExtriCal::calculateT(cv::Mat& _T, float _tran_x, float _tran_y, float _tran
 /**
  * @brief 将点云投影到像素
  */
-bool ExtriCal::project(cv::Point3f _3d_point, cv::Point2f& _pixel_point, cv::Mat _T){
+bool ExtriCal::projectL2C(cv::Point3f _3d_point, cv::Point2f& _pixel_point, cv::Mat _T){
     //将3x1的点云，转换为4x1的世界坐标，因为外参是4x4
     cv::Mat world_point = cv::Mat(4,1,CV_64FC1);
     world_point.at<double>(0,0) = _3d_point.x * 1000;   //所有都在mm量级下计算
@@ -238,16 +126,16 @@ bool ExtriCal::project(cv::Point3f _3d_point, cv::Point2f& _pixel_point, cv::Mat
         matrix_3x4_c2p.at<double>(i,3) = 0;
     }
     if(calib::Param::DEBUG_SHOW_COORDINATE == 1){
-/*         cout << "----------matrix_3x4_c2p--------" << endl;
-        cout << matrix_3x4_c2p << endl; */
+        //cout << "----------matrix_3x4_c2p--------" << endl;
+        //cout << matrix_3x4_c2p << endl;
     }
 
     //由3x4的变换矩阵得到3x1的像素平面内的齐次坐标
     cv::Mat pixel_point = cv::Mat(3,1,CV_64FC1);
     pixel_point = matrix_3x4_c2p * camera_point / camera_point.at<double>(2,0);//除Z(深度)是得到归一化平面的坐标
     if(calib::Param::DEBUG_SHOW_COORDINATE == 1){
-/*         cout << "--------point in image(3x1)--------" << endl;
-        cout << pixel_point << endl; */
+        //cout << "--------point in image(3x1)--------" << endl;
+        //cout << pixel_point << endl;
     }
 
     //赋值到Point2f的像素坐标
@@ -258,7 +146,6 @@ bool ExtriCal::project(cv::Point3f _3d_point, cv::Point2f& _pixel_point, cv::Mat
     }
 
     return true;
-
 }
 
 /**
@@ -266,12 +153,12 @@ bool ExtriCal::project(cv::Point3f _3d_point, cv::Point2f& _pixel_point, cv::Mat
  */
 int ExtriCal::judgeHit(cv::Point2f _pixel_point, vector<cv::Point2f> _roi_points){
     
-//    cout << _pixel_point.x << "   " << _pixel_point.y << endl;
+    //cout << _pixel_point << endl;
     for(int i = 0; i < _roi_points.size(); i++){ 
-//        cout << _roi_points[i] << endl;
+        //cout << _roi_points[i] << endl;
         if((int)_pixel_point.x == (int)_roi_points[i].x){//坐标化为整形进行比较，否则浮点型比较太难达到了
             if((int)_pixel_point.y == (int)_roi_points[i].y){
-//                cout << "Hit !" << endl;
+                //cout << "Hit !" << endl;
                 return 1;
             }else{
                 continue;

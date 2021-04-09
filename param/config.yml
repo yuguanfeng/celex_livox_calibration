@@ -1,10 +1,10 @@
 %YAML:1.0
 ---
 calibration_time: "2019年4月06日 星期六"
-nframes: 35
-image_width: 8256
-image_height: 5504
-square_size: 35
+
+#CameraSet
+width: 8256
+height: 5504 
 
 #640x480 由RGB2XYZ中计算而来
 camera_matrix: !!opencv-matrix
@@ -22,47 +22,32 @@ distortion_coefficients: !!opencv-matrix
 
 #Extrinsic parameters init 以相机坐标系为参考坐标系
 offset_x: 0       #单位mm
-offset_y: 150
+offset_y: 120
 offset_z: 0
-angle_x: 0
-angle_y: -90     #再绕动y’_camera轴转-90度
-angle_z: 90      #先绕z_camera轴转90度
-#上下限
-x_up: 50
-x_down: -50
-y_up: 200
-y_dowm: 100
+angle_x: 0        #pitch
+angle_y: -90      #yaw  再绕动y’_camera轴转-90度
+angle_z: 90       #roll 先绕z_camera轴转90度
+
+#Up and down
+y_up: 150
+y_dowm: 90
 z_up: 50
 z_down: -50
-angleX_up: 20
-angleX_down: -20
 angelY_up: -70
 angleY_down: -1110
-angleZ_up: 110
-angleZ_down: 70
 
 #Iteration
+dataset_number: 1
 step_offset: 10  #mm
 step_angle: 3    #degree
 max_hit_rate: 0.8
-max_iter_number: 5   #实际迭代+1次
-
-#CameraSet
-width: 8256
-height: 5504 
-
-if_event_camera: 0   #0 传统相机 1 事件相机
-
-#Process
-dataset_number: 1
-gray_threshold: 90
-pointcloud_threshold: 200
+max_iter_number: 2   #实际迭代+1次
 
 #Debug
-debug_show_image: 1
+debug_show_image: 0
 debug_show_pointcloud: 0
 debug_show_coordinate: 0
-debug_process: 1
-debug_calculate: 1
+debug_process: 0
+debug_calculate: 0
 
 
